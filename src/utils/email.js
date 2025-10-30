@@ -60,11 +60,11 @@ const sendEmail = async (options) => {
     //step 1 - create transporter
     const transporter = nodemailer.createTransport({
       host: process.env.MAILTRAP_SMTP_HOST,
-      port: MAILTRAP_SMTP_PORT,
+      port: process.env.MAILTRAP_SMTP_PORT,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: MAILTRAP_SMTP_USER,
-        pass: MAILTRAP_SMTP_PASSWORD,
+        user: process.env.MAILTRAP_SMTP_USER,
+        pass: process.env.MAILTRAP_SMTP_PASSWORD,
       },
     });
 
@@ -84,5 +84,13 @@ const sendEmail = async (options) => {
         console.error("Error :", error);
     }
 }
+
+sendEmail({
+    mailgenContent: emailVerificationContentGeneration("sakshi", "https://example.com"),
+    to: "sakshisinghnitbhopal@gmail.com",
+    subject: "test email"
+});
+
+
 
 export {emailVerificationContentGeneration, forgotPasswordEmailGeneration, sendEmail}
