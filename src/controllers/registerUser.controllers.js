@@ -1,8 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler"
-import { ApiResponse } from "../utils/api-response";
+import { asyncHandler } from "../utils/asyncHandler.js"
+import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js"
-import { User } from "../models/user.models";
-import { emailVerificationContentGeneration, sendEmail } from "../utils/email";
+import { User } from "../models/user.models.js";
+import { emailVerificationContentGeneration, sendEmail } from "../utils/email.js";
 
 // function to generate access token and refresh token, access token will be send to the user and refresh token will be saved into db, somebody will pass me userid
 const generateAccessAndRefreshToken = async (userId) => {
@@ -25,7 +25,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = asyncHandler(async(req, res) => {
     //1. accepting the user data
     // req.body - this will give all the data, we just have to destructure that
-    const {username, email, passwoed, role} = req.body;
+    const {username, email, password, role} = req.body;
 
     //3. checking if the user already exists in the DB (either username or email exists then we assume user already exists)
     //database call always returns promise because it will take time that's why we will wait until that promise is resolved
@@ -67,7 +67,7 @@ const registerUser = asyncHandler(async(req, res) => {
    })
 
    //6. sending response back to the requested api
-   
+
    //(we don't want to send all the details of the user as a response)
    const selectedFieldsForResponse = await User.findById(newUser._id).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry")
 

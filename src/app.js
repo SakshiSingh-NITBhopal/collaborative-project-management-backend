@@ -1,6 +1,5 @@
 import express from "express"
 import cors from 'cors'
-import healthCheck from "./routes/healthcheck.routes.js"
 
 const app = express();
 
@@ -25,6 +24,10 @@ app.get("/about", (req, res) => {
     res.send("this is our about page");
 })
 
-app.use("/api/v1/healthcheck", healthCheck);
+import healthCheckRoute from "./routes/healthcheck.routes.js"
+import registerationRoute from "./routes/registerUser.routes.js"
+
+app.use("/api/v1/healthcheck", healthCheckRoute);
+app.use("/api/v1/auth/", registerationRoute);
 
 export default app;
