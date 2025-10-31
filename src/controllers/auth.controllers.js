@@ -3,6 +3,8 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js"
 import { User } from "../models/user.models.js";
 import { emailVerificationContentGeneration, sendEmail } from "../utils/email.js";
+import { verifyJWT } from "../middlewares/auth.middlware.js";
+
 
 // function to generate access token and refresh token, access token will be send to the user and refresh token will be saved into db, somebody will pass me userid
 const generateAccessAndRefreshToken = async (userId) => {
@@ -84,6 +86,7 @@ const registerUser = asyncHandler(async(req, res) => {
     )
 })
 
+//controller for user login
 const loginUser = asyncHandler(async(req, res) => {
 
     //taking the data from the user
@@ -136,4 +139,40 @@ const loginUser = asyncHandler(async(req, res) => {
     
 })
 
-export {registerUser, loginUser};
+//controller for user logout
+const logoutUser = asyncHandler(async(req, res) => {
+    //remove the refresh token from the DB, we will take the help of verifyJWT middleware we have made it will extract user info from the access token and inject into request object
+    
+    //remove the refresh token from the DB, when we attach verifyJWT in the route it will inject user into req object
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: ""//this is the updated value of refreshToken that is empty string
+            }
+        },
+        {
+            new: true//this means give me the most updated object that we have although we are not storing into some variable
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    
+    //remove the cookie that is stored in user's browser in response
+    return res 
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "User logout successfully"
+            )
+        )
+})
+
+export {registerUser, loginUser, logoutUser};
