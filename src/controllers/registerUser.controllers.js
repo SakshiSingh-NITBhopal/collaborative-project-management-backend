@@ -65,6 +65,8 @@ const registerUser = asyncHandler(async(req, res) => {
         verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`//generating the url dynamically where protocol means http or https and host means localhost or example.com
     })
    })
+   console.log("Heyyo", typeof newUser.username);
+   
 
    //6. sending response back to the requested api
 

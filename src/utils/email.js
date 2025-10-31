@@ -2,7 +2,7 @@ import mailgen from "mailgen"
 import nodemailer from "nodemailer"
 
 // we will create a function to generate an email for email verification
-const emailVerificationContentGeneration = (username, verificationUrl) => {
+const emailVerificationContentGeneration = ({username, verificationUrl}) => {
     return {
         body: {
             name: username,
