@@ -73,7 +73,7 @@ const registerUser = asyncHandler(async(req, res) => {
    //(we don't want to send all the details of the user as a response)
    const selectedFieldsForResponse = await User.findById(newUser._id).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry")
 
-   res
+   return res
     .status(201)
     .json(
         new ApiResponse(
@@ -84,4 +84,56 @@ const registerUser = asyncHandler(async(req, res) => {
     )
 })
 
-export {registerUser};
+const loginUser = asyncHandler(async(req, res) => {
+
+    //taking the data from the user
+    const {email, password} = req.body
+
+    if(!email){
+        throw new ApiError(400, "email is required")
+    }
+
+    const user = await User.findOne({email})
+
+    if(!user){
+        throw new ApiError(400, "User does not exists")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if(!isPasswordValid){
+        throw new ApiError(400, "Invalid Credentials")
+    }
+
+    //generate tokens
+   const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
+
+   //we will send user info as the data as a response but we will not send all the fileds of the user, only send selected fields
+   const loggedInUser = await User.findById(user._id).select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry")
+
+   //cookie accepts some options which is nothing but simple object
+   const options = {
+    httpOnly: true,
+    secure: true
+   }
+
+   //send the cookie along with the data and status code in response
+   return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)//setting accessToken in cookie
+    .cookie("refreshToken", refreshToken, options)//setting refreshToken in cookie
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken
+            },
+            "User logged in successfully"
+        )
+    )
+    
+})
+
+export {registerUser, loginUser};

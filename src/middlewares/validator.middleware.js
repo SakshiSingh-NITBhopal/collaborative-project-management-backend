@@ -1,5 +1,5 @@
 import { validationResult } from "express-validator";
-import { ApiError } from "../utils/api-error";
+import { ApiError } from "../utils/api-error.js";
 
 //most of the middlewares have req, res, next in their parameters
 const validate = (req, res, next) => {
