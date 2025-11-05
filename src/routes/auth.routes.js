@@ -13,6 +13,6 @@ router.route("/register").post(userRegisterationValidator(), validate, registerU
 
 router.route("/login").post(userLoginValidator(), validate, loginUser)
 
-router.route("/login").post(verifyJWT, logoutUser)
+router.route("/logout").post(verifyJWT, logoutUser)
 
 export default router;

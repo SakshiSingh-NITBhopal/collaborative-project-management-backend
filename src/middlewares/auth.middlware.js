@@ -1,8 +1,8 @@
 //We don't want to decode access token in multiple controllers that's why we have written separate middleware for decoding access token
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.models";
-import { ApiError } from "../utils/api-error";
-import { asyncHandler } from "../utils/asyncHandler";
+import { User } from "../models/user.models.js";
+import { ApiError } from "../utils/api-error.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // in all the middleware's there is "next"
 export const verifyJWT = asyncHandler(async(req, res, next) => {

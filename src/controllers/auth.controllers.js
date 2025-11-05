@@ -66,9 +66,7 @@ const registerUser = asyncHandler(async(req, res) => {
         username: newUser.username,
         verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`//generating the url dynamically where protocol means http or https and host means localhost or example.com
     })
-   })
-   console.log("Heyyo", typeof newUser.username);
-   
+   })   
 
    //6. sending response back to the requested api
 
@@ -175,4 +173,87 @@ const logoutUser = asyncHandler(async(req, res) => {
         )
 })
 
-export {registerUser, loginUser, logoutUser};
+const getCurrentUser = asyncHandler(async(req, res) => {
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, 
+                req.user, 
+                "Current user fetched successfully")
+        )
+})
+
+const changePassword = asyncHandler(async(req, res) => {
+    const {newPassword} = req.body;
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                password: newPassword
+            }
+        },
+        {
+            new: true//this means give me the most updated object that we have although we are not storing into some variable
+        }
+    )
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                req.user,
+                "Password changed successfully"
+            )
+        )
+})
+
+const verifyEmail = asyncHandler(async(req,res) => {
+    //grab the verificationToken from url, like req.body we have req.params
+    const {verificationToken} = req.params;
+
+    if(!verificationToken){
+        throw new ApiError(400, "Email verification token is missing");
+    }
+
+    //when the user register then we have given unhashedToken to the user in the email and saved hashedToken in the DB, we now hashed the unhashed one and match with the db, if matches then the email will be verified
+    // For hashing use the crypto module
+    const hash = crypto
+        .createHash("sha256")
+        .update(verificationToken)
+        .digest("hex");
+
+    const user = await User.findOne({
+        emailVerificationToken: hash,
+        emailVerificationExpiry: {$gt: Date.now()}
+    })
+
+    if(!user){
+        throw new ApiError("Token is invalid or expired")
+    }
+
+    user.isEmailVerified = true;
+
+    //cleanup the email verification field as the email is verified
+    user.emailVerificationToken = undefined
+    user.emailVerificationExpiry = undefined
+
+    user.save({validateBeforeSave: false})
+
+    //sending the response back to the user
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    isEmailVerified: true,
+                    "Email is verified successfully"
+                }
+            )
+        )
+
+})
+
+export {registerUser, loginUser, logoutUser, getCurrentUser};
