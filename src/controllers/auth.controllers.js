@@ -249,11 +249,51 @@ const verifyEmail = asyncHandler(async(req,res) => {
                 200,
                 {
                     isEmailVerified: true,
-                    "Email is verified successfully"
-                }
+                },
+                "Email is verified successfully"
             )
         )
 
 })
 
-export {registerUser, loginUser, logoutUser, getCurrentUser};
+const resendEmailVerification = asyncHandler(async(req, res) => {
+    //we will send the verification email to those who are logged in, if the user is logged in then we have generated access and refresh token, we will use verifyJWT as the middleware to set the req.user
+    const user = await User.findById(req.user?._id)
+    
+    if(!user){
+        throw new ApiError(404, "User does not exist.")
+    }
+    
+    if(user.isEmailVerified){
+        throw new ApiError(409, "Email is already verified.")
+    }
+    
+    //send the email with verification token and store the hashed token in the db also
+    // It is a best practice to send unhashedToken to the user and save hashed to the DB
+    const {unHashedToken, hashedToken, tokenExpiry} = user.generateTemporaryToken();
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpiry = tokenExpiry;
+    user.save({validateBeforeSave: false})
+
+    sendEmail({
+        to: user?.email,
+        subject: "Please verify your email",
+        mailgenContent: emailVerificationContentGeneration({
+            username: user.username,
+            verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
+        })
+   })  
+
+   return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Mail has been sent to your email ID"
+        )
+    )
+
+})
+
+export {registerUser, loginUser, logoutUser, getCurrentUser, verifyEmail, resendEmailVerification};
