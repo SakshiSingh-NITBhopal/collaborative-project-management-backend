@@ -3,8 +3,7 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js"
 import { User } from "../models/user.models.js";
 import { emailVerificationContentGeneration, sendEmail } from "../utils/email.js";
-import { verifyJWT } from "../middlewares/auth.middlware.js";
-
+import jwt from "jsonwebtoken"
 
 // function to generate access token and refresh token, access token will be send to the user and refresh token will be saved into db, somebody will pass me userid
 const generateAccessAndRefreshToken = async (userId) => {
@@ -296,4 +295,59 @@ const resendEmailVerification = asyncHandler(async(req, res) => {
 
 })
 
-export {registerUser, loginUser, logoutUser, getCurrentUser, verifyEmail, resendEmailVerification};
+const refreshAccessToken = asyncHandler(async(req, res) => {
+    //when the user hits this route, then browser automatically sends the cookie also which has tokens
+    const incomingRefreshToken = req.cookies.refreshToken;
+
+    //if there is no incomingRefreshToken then we should not refresh access token
+    if(!incomingRefreshToken){
+        throw new ApiError(401, "Unauthorized access")
+    }
+
+   try {
+        //decode the refresh token as we have stored user info into it
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+        const user = await User.findById(decodedToken?._id)
+
+        if(!user){
+            throw new ApiError(400, "Invalid refresh token")
+        }
+
+        //if there is no refresh token presnt on the db then we have to check that also(extra security check)
+        if(incomingRefreshToken !== user.refreshToken){
+            throw new ApiError(400, "Refresh Token is expired");
+        }
+
+        //generating access token
+        const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+
+        //add the newly generated refresh token to the db
+        user.refreshToken = newRefreshToken;
+        await user.save()
+
+        //send the newly generated token to user via cookies
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200, 
+                    {
+                        accessToken, refreshToken: newRefreshToken
+                    },
+                    "Access token is refreshed successfully"
+                )
+            )
+   } catch (error) {
+    throw new ApiError(400, "Invalid refresh token")
+   }
+})
+
+export {registerUser, loginUser, logoutUser, getCurrentUser, verifyEmail, resendEmailVerification, refreshAccessToken};
