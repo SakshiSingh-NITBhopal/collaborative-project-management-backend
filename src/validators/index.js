@@ -47,17 +47,17 @@ const userForgotPasswordValidator = () => {
     ]
 }
 
-const userResetForgotPassword = () => {
+const userResetForgotPasswordValidator = () => {
     return [
         body("newPassword").notEmpty().withMessage("Password is required")
     ]
 }
 
-const userChangeCurrentPassword = () => {
+const userChangeCurrentPasswordValidator = () => {
     return [
         body("oldPassword").notEmpty().withMessage("Old password is required"),
         body("newPassword").notEmpty().withMessage("New password is required")
     ]
 }
 
-export {userRegisterationValidator, userLoginValidator, userForgotPasswordValidator, userResetForgotPassword, userChangeCurrentPassword}
+export {userRegisterationValidator, userLoginValidator, userForgotPasswordValidator, userResetForgotPasswordValidator, userChangeCurrentPasswordValidator}
