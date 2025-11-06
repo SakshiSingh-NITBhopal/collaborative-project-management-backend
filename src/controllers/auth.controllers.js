@@ -4,6 +4,7 @@ import { ApiError } from "../utils/api-error.js"
 import { User } from "../models/user.models.js";
 import { emailVerificationContentGeneration, forgotPasswordEmailGeneration, sendEmail } from "../utils/email.js";
 import jwt from "jsonwebtoken"
+import crypto from "crypto";
 
 // function to generate access token and refresh token, access token will be send to the user and refresh token will be saved into db, somebody will pass me userid
 const generateAccessAndRefreshToken = async (userId) => {
@@ -63,7 +64,7 @@ const registerUser = asyncHandler(async(req, res) => {
     subject: "Please verify your email",
     mailgenContent: emailVerificationContentGeneration({
         username: newUser.username,
-        verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`//generating the url dynamically where protocol means http or https and host means localhost or example.com
+        verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unHashedToken}`//generating the url dynamically where protocol means http or https and host means localhost or example.com
     })
    })   
 
@@ -205,7 +206,7 @@ const verifyEmail = asyncHandler(async(req,res) => {
     })
     
     if(!user){
-        throw new ApiError("Token is invalid or expired")
+        throw new ApiError(400, "Token is invalid or expired")
     }
 
     user.isEmailVerified = true;
@@ -214,7 +215,7 @@ const verifyEmail = asyncHandler(async(req,res) => {
     user.emailVerificationToken = undefined
     user.emailVerificationExpiry = undefined
     
-    user.save({validateBeforeSave: false})
+    await user.save({validateBeforeSave: false})
 
     //sending the response back to the user
     return res
@@ -335,7 +336,7 @@ const forgotPasswordRequest = asyncHandler(async(req, res) => {
         throw new ApiError(404, "User does not exists");
     }
     
-    const {unHashedToken, hashedToken, tokenExpiry} = await generateTemporaryToken()
+    const {unHashedToken, hashedToken, tokenExpiry} = await user.generateTemporaryToken()
 
     user.forgotPasswordToken = hashedToken;
     user.forgotPasswordExpiry = tokenExpiry;
@@ -344,10 +345,10 @@ const forgotPasswordRequest = asyncHandler(async(req, res) => {
     await sendEmail({
         to: user?.email,
         subject: "Password reset request",
-        mailgenContent: emailVerificationContentGeneration({
-            username: user.username,
-            verificationUrl: `${req.protocol}://${req.get("host")}/api/v1/users/forgot-password/${unHashedToken}`
-        })
+        mailgenContent: forgotPasswordEmailGeneration(
+            user?.username,
+            `${req.protocol}://${req.get("host")}/api/v1/auth/reset-password/${unHashedToken}`
+        )
     })
 
     return res  

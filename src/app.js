@@ -32,6 +32,6 @@ import healthCheckRoute from "./routes/healthcheck.routes.js"
 import registerationRoute from "./routes/auth.routes.js"
 
 app.use("/api/v1/healthcheck", healthCheckRoute);
-app.use("/api/v1/auth/", registerationRoute);
+app.use("/api/v1/auth", registerationRoute);
 
 export default app;

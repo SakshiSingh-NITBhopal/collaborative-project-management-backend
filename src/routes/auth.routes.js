@@ -1,5 +1,5 @@
 import {Router} from "express"
-import {logoutUser, registerUser} from "../controllers/auth.controllers.js"
+import {logoutUser, registerUser, verifyEmail, refreshAccessToken, forgotPasswordRequest, resetForgotPassword, getCurrentUser, changeCurrentPassword, resendEmailVerification} from "../controllers/auth.controllers.js"
 import { validate } from "../middlewares/validator.middleware.js";
 import { userRegisterationValidator, userForgotPasswordValidator, userLoginValidator, userResetForgotPasswordValidator, userChangeCurrentPasswordValidator } from "../validators/index.js";
 import { loginUser } from "../controllers/auth.controllers.js";
@@ -14,7 +14,7 @@ router.route("/register").post(userRegisterationValidator(), validate, registerU
 
 router.route("/login").post(userLoginValidator(), validate, loginUser)
 
-router.route("verify-email/:verificationToken").get(verifyEmail)
+router.route("/verify-email/:verificationToken").get(verifyEmail)
 
 router.route("/refresh-token").post(refreshAccessToken)
 

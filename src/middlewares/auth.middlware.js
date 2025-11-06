@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 // in all the middleware's there is "next"
 export const verifyJWT = asyncHandler(async(req, res, next) => {
     //accessing the token from either cookie or bearer header. Actually in the Bearer token we want only the token value not the Bearer space tokenValue that's why we cut out the Bearer space from the token and extract its value only using js replace(). And in the cookie carefully write the accessToken name and it is just same as accessToken you have passed as a response to the user 
-    const token = req.cookie?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
     
     if(!token){
         throw new ApiError(400, "Unauthorized request")
